@@ -1,0 +1,24 @@
+{
+  "name": "businesscom-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for the BusinessCom distributor API (catalog + My-Connect, read-only)",
+  "type": "module",
+  "bin": { "businesscom-mcp": "dist/index.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^3.0.0"
+  }
+}
