@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "businesscom-mcp",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-07-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [{ "name": "BUSINESSCOM_MCP", "class_name": "BusinessComMcp" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BusinessComMcp"] }],
+  "observability": { "enabled": true }
+}

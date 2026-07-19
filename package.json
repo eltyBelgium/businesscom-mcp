@@ -3,22 +3,35 @@
   "version": "0.1.0",
   "description": "MCP server for the BusinessCom distributor API (catalog + My-Connect, read-only)",
   "type": "module",
-  "bin": { "businesscom-mcp": "dist/index.js" },
-  "files": ["dist"],
+  "bin": {
+    "businesscom-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "dev:worker": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck:worker": "tsc -p tsconfig.worker.json",
+    "check:remote": "tsx scripts/check-remote.ts"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "agents": "^0.17.4",
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260719.1",
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "wrangler": "^4.112.0"
   }
 }
