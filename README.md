@@ -49,6 +49,38 @@ For Claude Desktop, add to `claude_desktop_config.json`:
 }
 ```
 
+## Remote (Cloudflare Workers)
+
+The server also runs as a remote MCP endpoint (Streamable HTTP) at
+`https://businesscom-mcp.tyas.workers.dev/mcp`, protected by Cloudflare Access — clients need a
+Zero Trust service token.
+
+Deploy/update (secrets are set once, interactively — never commit them):
+
+```bash
+npm run deploy
+npx wrangler secret put BUSINESSCOM_USERNAME
+npx wrangler secret put BUSINESSCOM_PASSWORD
+```
+
+Register in Claude Code (values from your Zero Trust service token):
+
+```bash
+claude mcp add --transport http businesscom-remote \
+  https://businesscom-mcp.tyas.workers.dev/mcp \
+  --header "CF-Access-Client-Id: <token-id>.access" \
+  --header "CF-Access-Client-Secret: <token-secret>"
+```
+
+Verify end-to-end:
+
+```bash
+CF_ACCESS_CLIENT_ID=... CF_ACCESS_CLIENT_SECRET=... \
+  npm run check:remote -- https://businesscom-mcp.tyas.workers.dev/mcp
+```
+
+Local worker development: `cp .dev.vars.example .dev.vars`, then `npm run dev:worker`.
+
 ## Tools
 
 | Tool | Description |
