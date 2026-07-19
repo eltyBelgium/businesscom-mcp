@@ -23,4 +23,23 @@ describe('htmlToText', () => {
   it('truncates to maxLength with an ellipsis', () => {
     expect(htmlToText('x'.repeat(50), 10)).toBe('x'.repeat(10) + '…')
   })
+
+  it('drops script and style element contents entirely', () => {
+    expect(htmlToText('<style>.a{color:red}</style><p>Body</p><script>var x=1</script>')).toBe('Body')
+  })
+
+  it('separates table cells and nested list items', () => {
+    expect(htmlToText('<table><tr><td>Weight</td><td>500g</td></tr></table>')).toBe('Weight 500g')
+    expect(htmlToText('<ul><li>A<ul><li>B</li></ul></li></ul>')).toBe('A\nB')
+  })
+
+  it('decodes hex numeric entities and extended named entities', () => {
+    expect(htmlToText('It&#x2019;s caf&eacute; &ndash; 5&deg;')).toBe('It’s café – 5°')
+  })
+
+  it('does not split a surrogate pair when truncating', () => {
+    const text = 'ab😀cd'
+    const out = htmlToText(text, 3)
+    expect(out).toBe('ab…')
+  })
 })
