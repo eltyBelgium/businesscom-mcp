@@ -14,7 +14,7 @@ import { isValidPeriod, paginate } from './myconnect.js'
 import type { StockItem } from './types.js'
 
 function ok(data: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] }
+  return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] }
 }
 
 function fail(err: unknown) {
@@ -88,7 +88,21 @@ export function createServer(api: BusinessComApi): McpServer {
             ? (priceRes.value.find((p) => p.product_id === product_id)?.price ?? null)
             : null
         const stock = stockRes.status === 'fulfilled' ? stockRes.value : null
-        return ok(productDetail(product, price, stock))
+        const priceError =
+          priceRes.status === 'rejected'
+            ? String((priceRes.reason as Error)?.message ?? priceRes.reason)
+            : undefined
+        // A 404 means the product simply has no stock record — not an error.
+        const stockError =
+          stockRes.status === 'rejected' &&
+          (stockRes.reason as BusinessComError)?.status !== 404
+            ? String((stockRes.reason as Error)?.message ?? stockRes.reason)
+            : undefined
+        return ok({
+          ...productDetail(product, price, stock),
+          ...(priceError ? { price_error: priceError } : {}),
+          ...(stockError ? { stock_error: stockError } : {}),
+        })
       } catch (err) {
         return fail(err)
       }
@@ -99,7 +113,9 @@ export function createServer(api: BusinessComApi): McpServer {
     'get_prices',
     {
       description: 'Get reseller prices (your terms and promotions applied) for specific product IDs.',
-      inputSchema: { product_ids: z.array(z.string()).min(1).max(100) },
+      inputSchema: {
+        product_ids: z.array(z.string()).min(1).max(100).describe('BusinessCom product references'),
+      },
     },
     async ({ product_ids }) => {
       try {
@@ -120,14 +136,23 @@ export function createServer(api: BusinessComApi): McpServer {
     'get_stock',
     {
       description: 'Get live stock status, exact quantity (max 250 shown) and lead time for product IDs.',
-      inputSchema: { product_ids: z.array(z.string()).min(1).max(100) },
+      inputSchema: {
+        product_ids: z.array(z.string()).min(1).max(100).describe('BusinessCom product references'),
+      },
     },
     async ({ product_ids }) => {
       try {
         let items: StockItem[]
         let not_found: string[] = []
         if (product_ids.length === 1) {
-          items = [await api.getStockOne(product_ids[0])]
+          try {
+            items = [await api.getStockOne(product_ids[0])]
+          } catch (err) {
+            if (err instanceof BusinessComError && err.status === 404) {
+              return ok({ stock: [], not_found: [product_ids[0]] })
+            }
+            throw err
+          }
         } else {
           const all = await api.getStockAll()
           const byId = new Map(all.map((s) => [s.product_id, s]))
@@ -151,7 +176,7 @@ export function createServer(api: BusinessComApi): McpServer {
     'get_related_products',
     {
       description: 'Get accessories/related products for a product (e.g. chargers for a handset).',
-      inputSchema: { product_id: z.string() },
+      inputSchema: { product_id: z.string().describe('BusinessCom product reference') },
     },
     async ({ product_id }) => {
       try {
@@ -190,8 +215,8 @@ export function createServer(api: BusinessComApi): McpServer {
       inputSchema: {
         period: periodSchema.describe('Invoice period, MMYYYY'),
         type: z.enum(['purchases', 'sales']).default('purchases'),
-        limit: z.number().int().min(1).max(1000).default(200),
-        offset: z.number().int().min(0).default(0),
+        limit: z.number().int().min(1).max(1000).default(200).describe('Max rows to return'),
+        offset: z.number().int().min(0).default(0).describe('Row offset for pagination'),
       },
     },
     async ({ period, type, limit, offset }) => {
@@ -213,9 +238,11 @@ export function createServer(api: BusinessComApi): McpServer {
         period: periodSchema.optional().describe('Period, MMYYYY; omit for last month'),
         grouping: z.enum(['customer', 'trunk', 'number']).optional(),
         totals_per_destination: z.boolean().optional(),
+        limit: z.number().int().min(1).max(1000).default(200).describe('Max rows to return'),
+        offset: z.number().int().min(0).default(0).describe('Row offset for pagination'),
       },
     },
-    async ({ period, grouping, totals_per_destination }) => {
+    async ({ period, grouping, totals_per_destination, limit, offset }) => {
       try {
         const csv = await api.getCdrCsv({
           period,
@@ -223,7 +250,7 @@ export function createServer(api: BusinessComApi): McpServer {
           totalsPerDestination: totals_per_destination,
         })
         const rows = parseSemicolonCsv(csv)
-        return ok({ total_rows: rows.length, rows })
+        return ok(paginate(rows, limit, offset))
       } catch (err) {
         return fail(err)
       }

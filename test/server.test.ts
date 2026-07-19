@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { createServer } from '../src/server.js'
+import { BusinessComError } from '../src/client.js'
 import type { BusinessComApi } from '../src/client.js'
 import type { Product } from '../src/types.js'
 
@@ -107,5 +108,60 @@ describe('businesscom MCP server', () => {
     const client = await connect()
     const res = await client.callTool({ name: 'get_myconnect_cdr', arguments: {} })
     expect(JSON.parse(firstText(res)).rows[0].Calls).toBe('738')
+  })
+
+  it('get_stock returns not_found consistently for single and multiple ids', async () => {
+    const notFoundApi: BusinessComApi = {
+      ...fakeApi,
+      getStockOne: async (id) => {
+        throw new BusinessComError(`Unknown product_id "${id}"`, 404)
+      },
+      getStockAll: async () => [{ product_id: 'P1', stock_status_code: 2, stock_quantity: 9, lead_time: 1 }],
+    }
+    const server = createServer(notFoundApi)
+    const [ct, st] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 'test', version: '0.0.0' })
+    await Promise.all([server.connect(st), client.connect(ct)])
+    const single = await client.callTool({ name: 'get_stock', arguments: { product_ids: ['NOPE'] } })
+    expect(single.isError).toBeFalsy()
+    expect(JSON.parse(firstText(single))).toEqual({ stock: [], not_found: ['NOPE'] })
+    const multi = await client.callTool({ name: 'get_stock', arguments: { product_ids: ['P1', 'NOPE'] } })
+    const parsed = JSON.parse(firstText(multi))
+    expect(parsed.stock).toHaveLength(1)
+    expect(parsed.not_found).toEqual(['NOPE'])
+  })
+
+  it('surfaces a price fetch failure on get_product without failing the call', async () => {
+    const flakyApi: BusinessComApi = {
+      ...fakeApi,
+      getPrices: async () => {
+        throw new BusinessComError('BusinessCom API returned HTTP 500 for /prices', 500)
+      },
+    }
+    const server = createServer(flakyApi)
+    const [ct, st] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 'test', version: '0.0.0' })
+    await Promise.all([server.connect(st), client.connect(ct)])
+    const res = await client.callTool({ name: 'get_product', arguments: { product_id: 'P1' } })
+    const parsed = JSON.parse(firstText(res))
+    expect(parsed.reseller_price).toBeNull()
+    expect(parsed.price_error).toContain('HTTP 500')
+    expect(parsed.stock.quantity).toBe(9)
+  })
+
+  it('passes actionable error text through to the client', async () => {
+    const authFailApi: BusinessComApi = {
+      ...fakeApi,
+      getProducts: async () => {
+        throw new BusinessComError('Authentication failed — check BUSINESSCOM_USERNAME / BUSINESSCOM_PASSWORD and that the account has API privileges.', 401)
+      },
+    }
+    const server = createServer(authFailApi)
+    const [ct, st] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 'test', version: '0.0.0' })
+    await Promise.all([server.connect(st), client.connect(ct)])
+    const res = await client.callTool({ name: 'search_products', arguments: {} })
+    expect(res.isError).toBe(true)
+    expect(firstText(res)).toContain('BUSINESSCOM_USERNAME')
   })
 })
