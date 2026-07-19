@@ -30,6 +30,18 @@ describe('parseSemicolonCsv', () => {
     expect(parseSemicolonCsv(csv)).toEqual([{ A: '1', B: '2' }])
   })
 
+  it('treats a quote in the middle of an unquoted field as literal data', () => {
+    const csv = 'Product;Price\nModel 6" Antenna;100\nNext;200'
+    expect(parseSemicolonCsv(csv)).toEqual([
+      { Product: 'Model 6" Antenna', Price: '100' },
+      { Product: 'Next', Price: '200' },
+    ])
+  })
+
+  it('strips a leading UTF-8 BOM', () => {
+    expect(parseSemicolonCsv('﻿"A";"B"\n"1";"2"')).toEqual([{ A: '1', B: '2' }])
+  })
+
   it('returns [] for empty input or header-only input', () => {
     expect(parseSemicolonCsv('')).toEqual([])
     expect(parseSemicolonCsv('"A";"B"\n')).toEqual([])
