@@ -66,7 +66,9 @@ export function searchProducts(products: Product[], f: SearchFilters) {
     if (f.in_stock_only && p.stock_status_code <= 0) return false
     return true
   })
-  matches.sort((a, b) => b.popularity_ranking - a.popularity_ranking)
+  matches.sort(
+    (a, b) => b.popularity_ranking - a.popularity_ranking || a.product_id.localeCompare(b.product_id),
+  )
   return {
     total_matches: matches.length,
     results: matches.slice(f.offset, f.offset + f.limit).map(summarizeProduct),

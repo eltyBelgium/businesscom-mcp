@@ -63,6 +63,16 @@ describe('searchProducts', () => {
     expect(page2.results.map((r) => r.product_id)).toEqual(['P3'])
   })
 
+  it('breaks popularity ties deterministically by product_id', () => {
+    const tied = [
+      product({ product_id: 'B2', popularity_ranking: 7 }),
+      product({ product_id: 'A1', popularity_ranking: 7 }),
+      product({ product_id: 'C3', popularity_ranking: 7 }),
+    ]
+    const { results } = searchProducts(tied, { limit: 10, offset: 0 })
+    expect(results.map((r) => r.product_id)).toEqual(['A1', 'B2', 'C3'])
+  })
+
   it('never includes descriptions in results', () => {
     const { results } = searchProducts(catalog, { limit: 20, offset: 0 })
     for (const r of results) expect(r).not.toHaveProperty('description_html')
