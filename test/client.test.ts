@@ -74,6 +74,20 @@ describe('BusinessComClient', () => {
     await expect(make().getProducts()).rejects.toThrow(/timed out/)
   })
 
+  it('wraps malformed JSON on a 200 response in BusinessComError', async () => {
+    stubFetch(200, '<html>maintenance</html>')
+    const err = await make().getProducts().catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(BusinessComError)
+    expect((err as BusinessComError).message).toContain('Invalid JSON')
+  })
+
+  it('passes an abort signal to fetch', async () => {
+    const fn = stubFetch(200, '[]')
+    await make().getPrices()
+    const [, init] = fn.mock.calls[0] as [string, RequestInit]
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
+
   it('builds the CDR query string with the fixed decimal separator', async () => {
     const fn = stubFetch(200, '')
     await make().getCdrCsv({ period: '052026', grouping: 'trunk', totalsPerDestination: true })

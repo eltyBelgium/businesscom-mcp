@@ -61,6 +61,15 @@ export class BusinessComClient implements BusinessComApi {
     return res
   }
 
+  private async requestJson<T>(path: string, accept?: string): Promise<T> {
+    const res = await this.request(path, accept)
+    try {
+      return (await res.json()) as T
+    } catch {
+      throw new BusinessComError(`Invalid JSON in response from ${path}`)
+    }
+  }
+
   private async toError(res: Response, path: string): Promise<BusinessComError> {
     if (res.status === 401) {
       return new BusinessComError(
@@ -87,22 +96,20 @@ export class BusinessComClient implements BusinessComApi {
   }
 
   async getProducts(): Promise<Product[]> {
-    return (await this.request('/products', PRODUCTS_ACCEPT)).json() as Promise<Product[]>
+    return this.requestJson<Product[]>('/products', PRODUCTS_ACCEPT)
   }
 
   async getPrices(): Promise<Price[]> {
-    return (await this.request('/prices')).json() as Promise<Price[]>
+    return this.requestJson<Price[]>('/prices')
   }
 
   async getStockAll(): Promise<StockItem[]> {
-    return (await this.request('/stock', STOCK_ACCEPT)).json() as Promise<StockItem[]>
+    return this.requestJson<StockItem[]>('/stock', STOCK_ACCEPT)
   }
 
   async getStockOne(productId: string): Promise<StockItem> {
     try {
-      return (await (
-        await this.request(`/stock/${encodeURIComponent(productId)}`)
-      ).json()) as StockItem
+      return await this.requestJson<StockItem>(`/stock/${encodeURIComponent(productId)}`)
     } catch (err) {
       if (err instanceof BusinessComError && err.status === 404) {
         throw new BusinessComError(`Unknown product_id "${productId}"`, 404)
@@ -112,7 +119,7 @@ export class BusinessComClient implements BusinessComApi {
   }
 
   async getProductRelations(): Promise<ProductRelation[]> {
-    return (await this.request('/productRelations')).json() as Promise<ProductRelation[]>
+    return this.requestJson<ProductRelation[]>('/productRelations')
   }
 
   async getInvoiceCsv(period: string, type: 'purchases' | 'sales'): Promise<string> {
