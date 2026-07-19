@@ -1,10 +1,11 @@
-/** Product from GET /products with the v202306 Accept header. */
+/** One image/media item attached to a product. */
 export interface ProductMedia {
   id: string
   file_extension: string
   updated_at: string
 }
 
+/** Product from GET /products with the v202306 Accept header. */
 export interface Product {
   product_id: string
   manufacturer_id: string | null
