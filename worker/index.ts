@@ -6,9 +6,12 @@ export interface Env {
   BUSINESSCOM_USERNAME: string
   BUSINESSCOM_PASSWORD: string
   BUSINESSCOM_BASE_URL?: string
-  BUSINESSCOM_MCP: DurableObjectNamespace
+  BUSINESSCOM_MCP: DurableObjectNamespace<BusinessComMcp>
 }
 
+// Server-only agent. Do not add outbound MCP-client features (this.mcp / addMcpServer):
+// the installed agents package calls zod v4's z.fromJSONSchema on that path, which
+// crashes at runtime against this project's zod v3 (installed with --legacy-peer-deps).
 export class BusinessComMcp extends McpAgent<Env> {
   server!: ReturnType<typeof createServer>
 

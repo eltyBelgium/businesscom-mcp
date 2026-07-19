@@ -6,6 +6,8 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    // "node" is only for Buffer in src/client.ts (provided at runtime by nodejs_compat);
+    // don't rely on other Node globals — they may not exist on Workers.
     "types": ["@cloudflare/workers-types", "node"]
   },
   "include": ["worker"]
