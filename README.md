@@ -23,6 +23,8 @@ npm run build
 
 ## Register with Claude Code
 
+Requires Node.js ≥ 18. Adjust the `dist/index.js` path below to where you cloned this repo.
+
 ```bash
 claude mcp add businesscom \
   --env BUSINESSCOM_USERNAME=your-login \
