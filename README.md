@@ -85,6 +85,35 @@ CF_ACCESS_CLIENT_ID=... CF_ACCESS_CLIENT_SECRET=... \
 
 Local worker development: `cp .dev.vars.example .dev.vars`, then `npm run dev:worker`.
 
+### claude.ai / Claude Desktop connectors (OAuth)
+
+Add a custom connector with URL `https://businesscom-mcp.tyas.workers.dev/oauth/mcp`.
+The login window is Elty's Cloudflare Access SSO; who may log in is controlled by
+the Zero Trust Access app on the `/authorize` path. Only Claude's official OAuth
+callbacks can receive authorization codes (allowlist in `worker/index.ts`).
+Claude Code keeps using the service-token `/mcp` path.
+
+**Zero Trust runbook (critical):**
+
+- The Access app for `/mcp` must be scoped to that path with a Service Auth
+  policy; the app for `/authorize` must be scoped to that path with an identity
+  Allow policy. **Never widen an Access app to the whole hostname** — that
+  breaks `/token`, `/register` and `/oauth/mcp` for claude.ai (server-to-server
+  calls carry no Access cookie).
+- Paste each app's AUD tag into `wrangler.jsonc` vars: `ACCESS_AUD` (the
+  `/authorize` app) and `ACCESS_MCP_AUD` (the `/mcp` app, optional
+  defense-in-depth), then deploy.
+- Vars live in `wrangler.jsonc` only — anything set via the Cloudflare
+  dashboard is wiped on the next deploy (including CI deploys).
+- Consider a WAF rate-limit rule on `/register` (public endpoint by OAuth spec).
+
+### CI/CD
+
+GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs
+tests + build + typechecks on every push/PR, and deploys `main` via wrangler
+after tests pass — once the repo secrets `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` are set (deploy skips with a notice until then).
+
 ## Tools
 
 | Tool | Description |
