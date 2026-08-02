@@ -72,6 +72,19 @@ describe('verifyAccessJwt', () => {
     await expect(verifyAccessJwt(null, TEAM, AUD)).rejects.toThrow(/[Mm]issing/)
   })
 
+  it('accepts a service-token JWT without email when requireEmail is false', async () => {
+    stubJwksFetch()
+    const jwt = await sign({ common_name: 'svc-token-client-id' })
+    const claims = await verifyAccessJwt(jwt, TEAM, AUD, { requireEmail: false })
+    expect(claims.common_name).toBe('svc-token-client-id')
+  })
+
+  it('still rejects missing email by default', async () => {
+    stubJwksFetch()
+    const jwt = await sign({ common_name: 'svc-token-client-id' })
+    await expect(verifyAccessJwt(jwt, TEAM, AUD)).rejects.toThrow(/email/)
+  })
+
   it('rejects a well-formed token signed by a different key', async () => {
     stubJwksFetch()
     const attacker = await generateKeyPair('RS256')
