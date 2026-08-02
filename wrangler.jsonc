@@ -10,5 +10,10 @@
     "bindings": [{ "name": "BUSINESSCOM_MCP", "class_name": "BusinessComMcp" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BusinessComMcp"] }],
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "20f6af82d51843d494542bdf141b5a59" }],
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "elty.cloudflareaccess.com",
+    "ACCESS_AUD": ""
+  },
   "observability": { "enabled": true }
 }
