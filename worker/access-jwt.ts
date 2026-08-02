@@ -26,6 +26,7 @@ export async function verifyAccessJwt(
   const { payload } = await jwtVerify(jwt, jwks, {
     issuer: `https://${teamDomain}`,
     audience: aud,
+    algorithms: ['RS256'],
   })
   if (typeof payload.email !== 'string') {
     throw new Error('Access token has no email claim')

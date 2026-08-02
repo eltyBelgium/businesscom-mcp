@@ -71,4 +71,17 @@ describe('verifyAccessJwt', () => {
     await expect(verifyAccessJwt('not-a-jwt', TEAM, AUD)).rejects.toThrow()
     await expect(verifyAccessJwt(null, TEAM, AUD)).rejects.toThrow(/[Mm]issing/)
   })
+
+  it('rejects a well-formed token signed by a different key', async () => {
+    stubJwksFetch()
+    const attacker = await generateKeyPair('RS256')
+    const forged = await new SignJWT({ email: 'mallory@evil.example' })
+      .setProtectedHeader({ alg: 'RS256', kid: 'test-kid' })
+      .setIssuedAt()
+      .setIssuer(`https://${TEAM}`)
+      .setAudience(AUD)
+      .setExpirationTime('5m')
+      .sign(attacker.privateKey as CryptoKey)
+    await expect(verifyAccessJwt(forged, TEAM, AUD)).rejects.toThrow()
+  })
 })
