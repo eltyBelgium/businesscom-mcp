@@ -13,10 +13,10 @@
   "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "20f6af82d51843d494542bdf141b5a59" }],
   "vars": {
     "ACCESS_TEAM_DOMAIN": "elty.cloudflareaccess.com",
-    "ACCESS_AUD": "",
-    // Sentinel = /mcp fails closed (403) because no Access app currently guards it.
-    // Replace with the real AUD tag of the /mcp Access app (Service Auth policy).
-    "ACCESS_MCP_AUD": "LOCKED-configure-access-app-for-mcp"
+    // AUD tag of the Zero Trust Access app "businesscom-mcp /authorize" (identity Allow @elty.be)
+    "ACCESS_AUD": "955c372f04acc2d236f280d8f6fd7e84e952887815facb1cfacd66e6ddb92b29",
+    // AUD tag of the Access app "businesscom-mcp /mcp" (Service Auth) — in-worker defense in depth
+    "ACCESS_MCP_AUD": "31c1bdc7706a5b33a7451b7d667a96684dd4540ba64e925c45235a7e910d1a64"
   },
   "observability": { "enabled": true }
 }
