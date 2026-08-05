@@ -98,4 +98,48 @@ describe('BusinessComClient', () => {
     expect(url.searchParams.get('grouping')).toBe('trunk')
     expect(url.searchParams.get('totals-per-destination')).toBe('true')
   })
+
+  it('getOrders() GETs /orders and unwraps the orders envelope', async () => {
+    const order = { orderId: 123, orderReference: 'ref-1' }
+    const fn = stubFetch(200, JSON.stringify({ orders: [order] }))
+    const result = await make().getOrders()
+    expect(fn.mock.calls[0][0]).toBe('https://www.businesscom.nl/api/v1/orders')
+    expect(result).toEqual([order])
+  })
+
+  it('getOrder(id) GETs /orders/{id} and unwraps { order: [o] } to the single order', async () => {
+    const order = { orderId: 123, orderReference: 'ref-1' }
+    const fn = stubFetch(200, JSON.stringify({ order: [order] }))
+    const result = await make().getOrder('123')
+    expect(fn.mock.calls[0][0]).toBe('https://www.businesscom.nl/api/v1/orders/123')
+    expect(result).toEqual(order)
+  })
+
+  it('getOrder(id) throws a BusinessComError mentioning the orderId when the array is empty', async () => {
+    stubFetch(200, JSON.stringify({ order: [] }))
+    await expect(make().getOrder('123')).rejects.toThrow(/123/)
+  })
+
+  it('getOrder(id) throws a BusinessComError mentioning the orderId when order is missing', async () => {
+    stubFetch(200, JSON.stringify({}))
+    await expect(make().getOrder('123')).rejects.toThrow(/123/)
+  })
+
+  it('getOrderSerials(id) GETs /orders/{id}/serials and returns the rows array', async () => {
+    const rows = [{ orderNumber: 123, lineNumber: 1 }]
+    const fn = stubFetch(200, JSON.stringify(rows))
+    const result = await make().getOrderSerials('123')
+    expect(fn.mock.calls[0][0]).toBe('https://www.businesscom.nl/api/v1/orders/123/serials')
+    expect(result).toEqual(rows)
+  })
+
+  it('maps 404 from getOrder to unknown orderId', async () => {
+    stubFetch(404, '')
+    await expect(make().getOrder('123')).rejects.toThrow(/Unknown orderId "123"/)
+  })
+
+  it('maps 404 from getOrderSerials to unknown orderId', async () => {
+    stubFetch(404, '')
+    await expect(make().getOrderSerials('123')).rejects.toThrow(/Unknown orderId "123"/)
+  })
 })

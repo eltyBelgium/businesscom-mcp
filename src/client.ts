@@ -1,4 +1,4 @@
-import type { Price, Product, ProductRelation, StockItem } from './types.js'
+import type { Order, OrderSerialsRow, Price, Product, ProductRelation, StockItem } from './types.js'
 
 export class BusinessComError extends Error {
   constructor(
@@ -26,6 +26,9 @@ export interface BusinessComApi {
   getProductRelations(): Promise<ProductRelation[]>
   getInvoiceCsv(period: string, type: 'purchases' | 'sales'): Promise<string>
   getCdrCsv(opts: { period?: string; grouping?: string; totalsPerDestination?: boolean }): Promise<string>
+  getOrders(): Promise<Order[]>
+  getOrder(orderId: string): Promise<Order>
+  getOrderSerials(orderId: string): Promise<OrderSerialsRow[]>
 }
 
 const DEFAULT_BASE_URL = 'https://www.businesscom.nl/api/v1'
@@ -138,5 +141,38 @@ export class BusinessComClient implements BusinessComApi {
       params.set('totals-per-destination', String(opts.totalsPerDestination))
     }
     return (await this.request(`/myconnect/cdr?${params}`)).text()
+  }
+
+  async getOrders(): Promise<Order[]> {
+    const body = await this.requestJson<{ orders?: Order[] }>('/orders')
+    return body.orders ?? []
+  }
+
+  async getOrder(orderId: string): Promise<Order> {
+    let body: { order?: Order[] }
+    try {
+      body = await this.requestJson<{ order?: Order[] }>(`/orders/${encodeURIComponent(orderId)}`)
+    } catch (err) {
+      if (err instanceof BusinessComError && err.status === 404) {
+        throw new BusinessComError(`Unknown orderId "${orderId}"`, 404)
+      }
+      throw err
+    }
+    const order = body.order?.[0]
+    if (!order) {
+      throw new BusinessComError(`Unknown orderId "${orderId}": order not found in response`)
+    }
+    return order
+  }
+
+  async getOrderSerials(orderId: string): Promise<OrderSerialsRow[]> {
+    try {
+      return await this.requestJson<OrderSerialsRow[]>(`/orders/${encodeURIComponent(orderId)}/serials`)
+    } catch (err) {
+      if (err instanceof BusinessComError && err.status === 404) {
+        throw new BusinessComError(`Unknown orderId "${orderId}"`, 404)
+      }
+      throw err
+    }
   }
 }
