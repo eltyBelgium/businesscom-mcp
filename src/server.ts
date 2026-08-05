@@ -11,6 +11,7 @@ import {
 } from './catalog.js'
 import { parseSemicolonCsv } from './csv.js'
 import { isValidPeriod, paginate } from './myconnect.js'
+import { listOrders, orderDetail, serialsReport } from './orders.js'
 import type { StockItem } from './types.js'
 
 function ok(data: unknown) {
@@ -251,6 +252,62 @@ export function createServer(api: BusinessComApi): McpServer {
         })
         const rows = parseSemicolonCsv(csv)
         return ok(paginate(rows, limit, offset))
+      } catch (err) {
+        return fail(err)
+      }
+    },
+  )
+
+  server.registerTool(
+    'list_orders',
+    {
+      description:
+        'List orders placed with BusinessCom in the last 30 days (read-only). Returns compact summaries.',
+      inputSchema: {
+        query: z
+          .string()
+          .optional()
+          .describe('Substring match on order reference, order id or ship-to business name'),
+        status: z.string().optional().describe('Exact order status, e.g. invoiced'),
+        limit: z.number().int().min(1).max(100).default(20),
+        offset: z.number().int().min(0).default(0),
+      },
+    },
+    async (args) => {
+      try {
+        return ok(listOrders(await api.getOrders(), args))
+      } catch (err) {
+        return fail(err)
+      }
+    },
+  )
+
+  server.registerTool(
+    'get_order',
+    {
+      description:
+        'Get full order details (status, totals, addresses, track & trace, line items) by order ID. Read-only.',
+      inputSchema: { order_id: z.string().describe('BusinessCom order ID') },
+    },
+    async ({ order_id }) => {
+      try {
+        return ok(orderDetail(await api.getOrder(order_id)))
+      } catch (err) {
+        return fail(err)
+      }
+    },
+  )
+
+  server.registerTool(
+    'get_order_serials',
+    {
+      description:
+        'Get serial numbers, MAC addresses and IMEIs for the items of an order. Read-only.',
+      inputSchema: { order_id: z.string().describe('BusinessCom order ID') },
+    },
+    async ({ order_id }) => {
+      try {
+        return ok(serialsReport(await api.getOrderSerials(order_id)))
       } catch (err) {
         return fail(err)
       }

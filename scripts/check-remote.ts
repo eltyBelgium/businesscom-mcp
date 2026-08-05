@@ -4,7 +4,7 @@
  *   e.g. npm run check:remote -- http://localhost:8787/mcp
  * Optional Cloudflare Access service token via env:
  *   CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET
- * Exits 0 iff the endpoint lists exactly the 8 expected tools.
+ * Exits 0 iff the endpoint lists exactly the 11 expected tools.
  */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
@@ -12,11 +12,14 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 const EXPECTED = [
   'get_myconnect_cdr',
   'get_myconnect_invoice',
+  'get_order',
+  'get_order_serials',
   'get_prices',
   'get_product',
   'get_related_products',
   'get_stock',
   'list_categories',
+  'list_orders',
   'search_products',
 ]
 
@@ -45,7 +48,7 @@ try {
   const ok = JSON.stringify(names) === JSON.stringify(EXPECTED)
   await client.close()
   if (!ok) {
-    console.error('Tool list does not match the 8 expected tools.')
+    console.error('Tool list does not match the 11 expected tools.')
     process.exit(1)
   }
   console.log('remote check OK')

@@ -2,8 +2,9 @@
 
 Read-only MCP server for the [BusinessCom](https://businesscom.nl) distributor API.
 Exposes catalog search, product details, reseller prices, live stock, related
-products, and My-Connect invoices/CDR as MCP tools. No orders — the server
-cannot place or modify anything. No database or cache — every call fetches
+products, order viewing, and My-Connect invoices/CDR as MCP tools. Ordering is
+impossible — the server offers read-only order viewing (list, details, serials)
+and cannot place or modify anything. No database or cache — every call fetches
 live data.
 
 ## Setup
@@ -124,6 +125,9 @@ after tests pass — once the repo secrets `CLOUDFLARE_API_TOKEN` and
 | `get_stock` | Live stock status/quantity/lead time for product IDs |
 | `get_related_products` | Accessories/related products for a product |
 | `list_categories` | All categories, subcategories and brands |
+| `list_orders` | List last-30-days orders, filter by reference/status |
+| `get_order` | Full order detail incl. status, totals, track & trace |
+| `get_order_serials` | Serials/MACs/IMEIs per order line |
 | `get_myconnect_invoice` | My-Connect invoice (purchases/sales) per period (MMYYYY) |
 | `get_myconnect_cdr` | My-Connect CDR totals per period/grouping |
 

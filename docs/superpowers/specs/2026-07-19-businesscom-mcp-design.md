@@ -19,6 +19,8 @@ Full API details: see [../api-reference.md](../api-reference.md) (captured from 
 - Order endpoints (list/detail/serials and especially POST /orders — the server must place no orders)
 - Any database or cache — every tool call fetches live data from the API ("no db, only live data")
 
+Amended 2026-08-05: read-only order tools (list_orders, get_order, get_order_serials) added by user decision; POST /orders remains permanently excluded.
+
 ## Architecture
 
 - TypeScript, Node >= 18 (native `fetch`), ESM
