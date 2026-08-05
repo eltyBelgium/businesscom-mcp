@@ -14,7 +14,9 @@
   "vars": {
     "ACCESS_TEAM_DOMAIN": "elty.cloudflareaccess.com",
     "ACCESS_AUD": "",
-    "ACCESS_MCP_AUD": ""
+    // Sentinel = /mcp fails closed (403) because no Access app currently guards it.
+    // Replace with the real AUD tag of the /mcp Access app (Service Auth policy).
+    "ACCESS_MCP_AUD": "LOCKED-configure-access-app-for-mcp"
   },
   "observability": { "enabled": true }
 }
