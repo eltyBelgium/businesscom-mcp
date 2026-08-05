@@ -160,7 +160,7 @@ export class BusinessComClient implements BusinessComApi {
     }
     const order = body.order?.[0]
     if (!order) {
-      throw new BusinessComError(`Unknown orderId "${orderId}": order not found in response`)
+      throw new BusinessComError(`Unknown orderId "${orderId}": order not found in response`, 404)
     }
     return order
   }

@@ -107,6 +107,12 @@ describe('BusinessComClient', () => {
     expect(result).toEqual([order])
   })
 
+  it('getOrders() falls back to [] when the response has no orders key', async () => {
+    stubFetch(200, JSON.stringify({}))
+    const result = await make().getOrders()
+    expect(result).toEqual([])
+  })
+
   it('getOrder(id) GETs /orders/{id} and unwraps { order: [o] } to the single order', async () => {
     const order = { orderId: 123, orderReference: 'ref-1' }
     const fn = stubFetch(200, JSON.stringify({ order: [order] }))
@@ -118,6 +124,13 @@ describe('BusinessComClient', () => {
   it('getOrder(id) throws a BusinessComError mentioning the orderId when the array is empty', async () => {
     stubFetch(200, JSON.stringify({ order: [] }))
     await expect(make().getOrder('123')).rejects.toThrow(/123/)
+  })
+
+  it('getOrder(id) throws with status 404 when the order array is present but empty', async () => {
+    stubFetch(200, JSON.stringify({ order: [] }))
+    const err = await make().getOrder('123').catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(BusinessComError)
+    expect((err as BusinessComError).status).toBe(404)
   })
 
   it('getOrder(id) throws a BusinessComError mentioning the orderId when order is missing', async () => {
