@@ -14,9 +14,9 @@
   "vars": {
     "ACCESS_TEAM_DOMAIN": "elty.cloudflareaccess.com",
     // AUD tag of the Zero Trust Access app "businesscom-mcp /authorize" (identity Allow @elty.be)
-    "ACCESS_AUD": "955c372f04acc2d236f280d8f6fd7e84e952887815facb1cfacd66e6ddb92b29",
+    "ACCESS_AUD": "6c16f58e94bcb882cf2d6caf8cc656cc7151b90355e1c8876640ecffc5c33aa2",
     // AUD tag of the Access app "businesscom-mcp /mcp" (Service Auth) — in-worker defense in depth
-    "ACCESS_MCP_AUD": "31c1bdc7706a5b33a7451b7d667a96684dd4540ba64e925c45235a7e910d1a64"
+    "ACCESS_MCP_AUD": "f9870472d373526eba8c8dac0334ff14ed5f51c76ceb9f8c0076b4cb10a36212"
   },
   "observability": { "enabled": true }
 }
